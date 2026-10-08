@@ -97,22 +97,13 @@ class Player(ABC):
         pass
 
 
-class User(Player):
-
-    def get_move(self, board):
-        mossa = int_input(">> Inserisci mossa: ")
-        while mossa not in board.available_moves:
-            mossa = int_input(">> Mossa illegale o non esitente. Inserisci mossa: ")
-        return mossa
-
-
 class Computer(Player):
 
     def __init__(self, myturn):
         super().__init__(myturn)
         self.opponent = 'O' if myturn else 'X'
 
-    def minimax(self, board, myturn):
+    def minimax(self, board, myturn, alpha, beta):
         game_state = board.game_winner()
         match game_state:
             case self.sign:
@@ -122,12 +113,14 @@ class Computer(Player):
             case 'D':
                 return 0
 
-        best_score = -10 if myturn else 10 #worse than worst for both players
+        #best_score = -10 if myturn else 10 #worse than worst for both players
+        #best_score sostituita da alpha e beta
+        best_score = alpha if myturn else beta
         sign = self.sign if myturn else self.opponent
 
         for m in list(board.available_moves):
             board.insert_move(sign, m)
-            score = self.minimax(board, not myturn)
+            score = self.minimax(board, not myturn, alpha, beta)
             #undoing move
             board.undo_move(m)
 
@@ -140,8 +133,13 @@ class Computer(Player):
             #pareggi e in corso
             elif myturn and score > best_score:
                 best_score = score
+                alpha = score #update alpha
             elif not myturn and score < best_score:
                 best_score = score
+                beta = score #update beta
+
+            if alpha >= beta:
+                break
 
         return best_score
 
@@ -150,13 +148,17 @@ class Computer(Player):
         best_score = -10 #worse than worst possible
         best_move = -1 #non existing move
 
+        #alpha beta pruning
+        alpha, beta = -10, +10
+
         for m in list(board.available_moves):
             board.insert_move(self.sign, m)
-            score = self.minimax(board, False)
+            score = self.minimax(board, False, alpha, beta)
             #undoing changes on board
             board.undo_move(m)
             if score > best_score:
                 best_score = score
+                alpha = score   #alpha beta pruning
                 best_move = m
                 #piccola ottimizzazione
                 if best_score == 1:
@@ -164,7 +166,23 @@ class Computer(Player):
                 #inutile continui a cercare se ha la certezza di vincere
         return best_move
             
-        
+
+
+class User(Player):
+
+    def __init__(self, myturn):
+        super().__init__(myturn)
+        self.helper = Computer(myturn)
+
+    def get_move(self, board):     
+        while True:
+            mossa = int_input(">>> Inserisci mossa o 9 per chiedere aiuto al computer: ")
+            if mossa in board.available_moves:
+                return mossa
+            if mossa == 9:
+                print(f"*** MOSSA CONSIGLIATA: {self.helper.get_move(board)}")
+            else:
+                print(">>> Mossa illegale o non esitente. ", end='')
 
 
 class GameManager:
@@ -206,17 +224,29 @@ class GameManager:
     #stabilisco i turni dei giocatori con un booleano, il metodo game winner controlla che la partita sia ancora in corso
     def start_game(self, mode):
         turn = True
-        self.board.clear_board()
+        judge = Computer(myturn=True)   #valuta posizione
+        self.board.clear_board()    #reinizializza board
         while self.board.game_winner() == "N":
             current_player = self.player1 if turn else self.player2
-            turn = not turn
-            clear_terminal()
+
+            eval = judge.minimax(self.board, turn, alpha=-10, beta=10)  #valutazione posizione       
+            
+            clear_terminal()    #stampa stato board
             print(TITLE)
             print(mode)
             self.board.view_board()
-            print(f"*** TOCCA A {current_player.sign}")
+
+            print("\n*** VALUTAZIONE POSIZIONE: ", end='')  #stampa valutazione (pareggio oppure vittoria di uno dei giocatori)
+            if eval == 0:
+                print("PAREGGIO CON GIOCO CORRETTO")   
+            else:    
+                print((f"{judge.sign} " if eval == 1 else f"{judge.opponent} ") + "VINCE CON GIOCO CORRETTO")
+
+            print(f"*** TOCCA A {current_player.sign}") #input next move
             move = current_player.get_move(self.board)
             self.board.insert_move(current_player.sign, move)
+
+            turn = not turn #cambio turno          
 
         winner = self.board.game_winner()
         clear_terminal()
