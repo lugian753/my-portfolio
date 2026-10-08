@@ -3,9 +3,8 @@
 ## Description:
 A Python terminal application where you can play tictactoe both singleplayer and local multiplayer. Position evaluation and a hint system have been implemented for 
 improved user experience and gameplay. Singleplayer is unbeatable due to the Minimax algorithm, which calulates the best possible move in any given position.
-For improved performace, minimax has been optimized with alpha-beta pruning, which allows to cut down branches from the moves tree if it already knows there was a
-"better worst outcome" (after maximising himself and minimizing opponent) in the previous analysed moves. This will help significantly when applied to more complex
-systems like chess.
+For improved performance, minimax has been optimized with alpha-beta pruning, which prunes paths from the moves tree if it already knows there was a better outcome
+for itself or worse for the opponent in the previously analyzed moves. This will help significantly when scaled to more complex systems like chess.
 
 ## Architecture
 The board is decleared as an istance of Board, which contains a 3x3 matrix (list of lists) containing spaces if the spot is empty or the character of the player 
