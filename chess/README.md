@@ -2,7 +2,7 @@
 
 A terminal application where you can play both singleplayer and local multiplayer.
 Multiplayer mode succesfully implemented.
-Singleplayer mode, working on implementing and optimizing minimax, at the moment, you can still play against the computer who will play random moves.
+Working on implementing and optimizing minimax, at the moment, you can still play against the computer who will just play random moves.
 
 ### chess.py
 main file to execute to run the application
